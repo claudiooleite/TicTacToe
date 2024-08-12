@@ -1,14 +1,4 @@
-//  9 options
-//
-// 2 players
-
-// function that has the board
-// function that updates the board
-// function that when player moves call the function that updates the board
-// function that checks the board
-// if the board has certain moves determins the winner
-// clear the board
-//
+// Retain existing game logic
 
 const winning_combinations = [
   [0, 1, 2],
@@ -32,11 +22,12 @@ function checkWinning(board, player) {
   }
   return false;
 }
-// factory function
-// Function to create a player
-function createPlayer(symbol) {
+
+// Factory function to create a player
+function CreatePlayer(symbol, name) {
   return {
     symbol,
+    name,
     plays(position) {
       // Validate the move
       if (typeof board[position] === "number") {
@@ -45,24 +36,104 @@ function createPlayer(symbol) {
 
         // Check if this move wins the game
         if (checkWinning(board, this.symbol)) {
-          console.log(`Player ${this.symbol} wins!`);
-          console.log("Final Board:", board);
+          showMessage(`${this.name} (${this.symbol}) wins!`);
+          disableBoard();
+        } else if (board.every((val) => typeof val === "string")) {
+          showMessage("It's a tie!");
         } else {
-          console.log(`Player ${this.symbol} played. Board:`, board);
+          currentPlayer = currentPlayer === playerX ? playerO : playerX;
+          showMessage(`${currentPlayer.name}'s (${currentPlayer.symbol}) turn`);
         }
       } else {
-        console.log("Invalid move! Position already taken.");
+        showMessage("Invalid move! Position already taken.");
       }
     },
   };
 }
-// Create players
-const playerX = createPlayer("X");
-const playerO = createPlayer("O");
 
-// Example moves
-playerX.plays(2); // Player X moves
-playerO.plays(4); // Player O moves
-playerX.plays(6); // Player X moves
-playerX.plays(7); // Player X moves
-playerX.plays(8); // Player X moves
+// Display message on the screen
+function showMessage(message) {
+  document.getElementById('messages').textContent = message;
+}
+
+// Disable the board after game ends
+function disableBoard() {
+  cells.forEach(cell => {
+    cell.style.pointerEvents = 'none';
+  });
+}
+
+// Reset board interaction
+function enableBoard() {
+  cells.forEach(cell => {
+    cell.style.pointerEvents = 'auto';
+  });
+}
+
+// Create players
+let playerX = CreatePlayer("X", "Player X");
+let playerO = CreatePlayer("O", "Player O");
+let currentPlayer = playerX;
+
+// Initialize the board
+const cells = document.querySelectorAll('.cell');
+const resetButton = document.getElementById('reset-button');
+const playerXNameInput = document.getElementById('playerXName');
+const playerONameInput = document.getElementById('playerOName');
+const playerXSymbolButton = document.getElementById('playerXSymbol');
+const playerOSymbolButton = document.getElementById('playerOSymbol');
+
+// Function to update the board UI
+function updateBoardUI() {
+  cells.forEach((cell, index) => {
+    cell.textContent = board[index] !== index ? board[index] : '';
+    cell.classList.toggle('taken', cell.textContent !== '');
+  });
+}
+
+// Add event listeners to cells
+cells.forEach(cell => {
+  cell.addEventListener('click', () => {
+    const index = parseInt(cell.getAttribute('data-index'));
+    if (typeof board[index] === 'number') {
+      currentPlayer.plays(index);
+      updateBoardUI();
+    }
+  });
+});
+
+// Add event listener to reset button
+resetButton.addEventListener('click', () => {
+  board.fill(null).forEach((_, index) => board[index] = index);
+  currentPlayer = playerX;
+  updateBoardUI();
+  enableBoard();
+  showMessage(`${currentPlayer.name}'s (${currentPlayer.symbol}) turn`);
+});
+
+// Add event listeners to player name inputs and symbol buttons
+playerXNameInput.addEventListener('input', (e) => {
+  playerX.name = e.target.value || "Player X";
+  showMessage(`${currentPlayer.name}'s (${currentPlayer.symbol}) turn`);
+});
+
+playerONameInput.addEventListener('input', (e) => {
+  playerO.name = e.target.value || "Player O";
+  showMessage(`${currentPlayer.name}'s (${currentPlayer.symbol}) turn`);
+});
+
+playerXSymbolButton.addEventListener('click', () => {
+  playerX.symbol = "X";
+  playerO.symbol = "O";
+  showMessage(`${playerX.name} is X, ${playerO.name} is O`);
+});
+
+playerOSymbolButton.addEventListener('click', () => {
+  playerX.symbol = "O";
+  playerO.symbol = "X";
+  showMessage(`${playerX.name} is O, ${playerO.name} is X`);
+});
+
+// Initial UI setup
+updateBoardUI();
+showMessage(`${currentPlayer.name}'s (${currentPlayer.symbol}) turn`);
